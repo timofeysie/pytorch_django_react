@@ -1,0 +1,27 @@
+<h1>Image Classification App</h1>
+<p>A simple Django web app with a pretrained PyTorch DenseNet model will try to classify the selected image according to ImageNet labels. Uploaded images are not saved.</p>
+<p><small>Further information:
+    <a href="" target="_blank">Blog Post</a>,
+    <a href="https://github.com/stefanbschneider/pytorch-django" target="_blank">GitHub</a></small>
+</p>
+
+<form method="post" enctype="multipart/form-data" style="margin-top: 50px; margin-bottom: 30px;">
+    {% csrf_token %}
+    {{ form }}
+    <button type="submit" id="btnUpload" class="btn btn-primary">Upload</button>
+</form>
+
+{% if image_uri is not None %}
+    {% if predicted_label is not None %}
+        <div class="alert alert-primary" role="alert">
+            Predicted label: <b>{{ predicted_label }}</b>
+        </div>
+    {% else %}
+        <div class="alert alert-danger" role="alert">
+            Prediction error. No label predicted.
+        </div>
+    {% endif %}
+
+    <img src="{{ image_uri }}" class="img-fluid" alt="Uploaded image"
+         style="max-width: min(500px, 100%); height: auto; margin-top: 30px;">
+{% endif %}
