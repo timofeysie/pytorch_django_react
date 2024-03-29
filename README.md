@@ -1,13 +1,29 @@
-# Pytorch Django
+# PyTorch, Django & React
 
-This project was started by following along with [Stefan Schneider's](https://stefanbschneider.github.io/blog/) article "[Using PyTorch Inside a Django App](https://stefanbschneider.github.io/blog/posts/pytorch-django/index.html)".
+This is a fullstack machine learning app to demonstrate the basics roles of a ML engineer.
 
-The above article covers using a pre-trained model for image classification and a simple html page to upload an image and put it to work.
+The current PyTorch functions are based on [Stefan Schneider's](https://stefanbschneider.github.io/blog/) article "[Using PyTorch Inside a Django App](https://stefanbschneider.github.io/blog/posts/pytorch-django/index.html)".  This covers using a pre-trained model for image classification and a simple html page to upload an image and put it to work.
 
-In this article I would like to expose the functionality with an [Django REST Framework API](https://www.django-rest-framework.org/) and create a more real-world app using a [React](https://react.dev/) frontend.
+I have implemented a [Django REST Framework API](https://www.django-rest-framework.org/) to expose the use of the model to create a more real-world example of using a [React](https://react.dev/) frontend deploy ML projects.  This project is in a separate repo called [PyTorch Frontend](https://github.com/timofeysie/pytorch_frontend).
+
+This is just a basic demonstration deploying a pre-trained model for use on the web.
+
+This covers just some of the roles that I consider a fullstack ML engineer is responsible.  Things that could also be considered part of this role that I am not covering at the moment include:
+
+- Design AI models
+- Data management
+- Infrastructure and architecture
+- Testing and validation
+
+In the future I hope to also include demonstrations of these skills so stay tuned!
+
+## Library details
 
 [PyTorch](https://pytorch.org/) is a machine learning library based on the Torch library, used for applications such as computer vision and natural language processing, originally developed by Meta AI (Facebook) and now part of the Linux Foundation umbrella. It is recognized as one of the two most popular machine learning libraries alongside [TensorFlow](https://www.tensorflow.org/).  TensorFlow, developed by Google, is also open-source and has a particular focus on training and inference of deep neural networks.
+
 According to [Google Trends](https://trends.google.com/trends/explore?date=today%205-y&q=%2Fg%2F11gd3905v1,%2Fg%2F11bwp1s2k3&hl=en-AU), TensorFlow was more popular in 2019, but now PyTorch is more popular.  You can see why PyTorch with a focus on computer vision is a good choice to this project.
+
+The React app was started with [Vite](https://vitejs.dev/guide/) and uses the [Material UI](https://mui.com/) component library.
 
 ## Project Workflow Reference
 
@@ -242,6 +258,8 @@ class Images(APIView):
         images = Image.objects.all()
         return Response(images)
 ```
+
+The GET at this point wont really be used because we will not be adding images to any db table yet.  A more usable app would have a list of images and their guesses by user, but this would require authentication, cloud storage and more.  To keep things simple for now, we will just focus on implementing the POST API and save the auth and db/image storage work for a later article.
 
 ### Create images urls
 
@@ -683,25 +701,205 @@ It's tempting to reach for a pre-made component such as this [MUI file input](ht
 
 But I'd like to walk through creating a custom solution so we can talk about extracting it as a re-usable component.  I have plans for this app which will require choosing files in other places.  We will pretend like there are no good options and proceed with making out own.
 
-The is a basic HTML input that would look like this:
+The regular unstyled HTML ```<input type="file">``` looks like a raw HTML button and is not going to impress anyone, so I have added custom styles to it.
 
-```html
-<label htmlFor="contained-button-file">
-<input
-    accept="image/*"
-    className={styles.input}
-    id="contained-button-file"
-    multiple
-    type="file"
-/>
+To accomplish this I created a CSS module in the same directory.  Many people create a separate files directory with only CSS but I like to co-locate them to where they are used so they are just a click away.
+
+```txt
+src\components\ImageClassification.jsx
+src\components\ImageClassification.module.css
+```
+
+The styles then look like this:
+
+```css
+.input {
+    display: none;
+}
+
+.custom_file_upload {
+  height: 30px;
+  width: 30px;
+  display: inline-block;
+  cursor: pointer;
+  margin: 6px;
+}
+```
+
+Now, to use them, you can import them into the component and use the class needed using dot notation.
+
+```js
+import styles from "./ImageClassification.module.css";
+
+...
+<label
+    htmlFor="contained-button-file".1
+    className={styles.custom_file_upload}
+    >
+    <FolderIcon sx={{ color: "black" }} />
+    <input
+        accept="image/*"
+        className={styles.input}
+        id="contained-button-file"
+        multiple
+        type="file"
+        onChange={onSelectFile}
+        ref={fileInputRef}
+    />
 </label>
 ```
 
-This looks like a regular unstyled HTML button.  That's not going to impress anyone.
+My idea initially was to have an image container the same size as the image will be transformed into on the backend (224 x 224), then if there is no image, show a button to choose the file.  However, since this is a native element, I couldn't get the same event handler to work for the image as the input, so I have gone with separate controls discussed in the next section.
 
-My idea is to have an image container the same size as the image will be transformed into on the backend, then if there is no image, show the text from the above component
+The JavScript for the image file chooser input looks like this:
 
-The size then is 224 x 224.
+```js
+  const [selectedFile, setSelectedFile] = useState();
+  const [preview, setPreview] = useState([]);
+  const fileInputRef = useRef(null);
+
+  /**
+   * Clear the predicted label and set the selected file object.
+   */
+  const onSelectFile = (e) => {
+    if (!e.target.files || e.target.files.length === 0) {
+      setSelectedFile(undefined);
+      return;
+    }
+    setPredictedLabel("");
+    setSelectedFile(e.target.files[0]);
+  };
+
+  /**
+   * Create a preview as a side effect whenever selected file is changed.
+   */
+  useEffect(() => {
+    if (!selectedFile) {
+      setPreview(undefined);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(selectedFile);
+    setPreview(objectUrl);
+    // free memory when ever this component is unmounted
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [selectedFile]);
+
+  ```
+
+### The full layout
+
+Putting it all together, I used MUI layout components like Stack, Container and Typography.  A lot more can be done to perfect this, but I'm not sure if this is the final design.  As they say, don't optimize something that shouldn't exist.
+
+I used the styled function to create the Item component.  This was straight out of the docs.  If this project keeps going, it's worth creating a theme to make things more consistent and the code cleaner.
+
+```js
+import { styled } from "@mui/material/styles";
+
+...
+
+  const Item = styled(Paper)(({ theme }) => ({
+    backgroundColor: theme.palette.mode === "dark" ? "#1A2027" : "#fff",
+    ...theme.typography.body2,
+    padding: theme.spacing(1),
+    textAlign: "start",
+    color: theme.palette.text.secondary,
+    minWidth: 300,
+    width: 300,
+    justifyContent: "start",
+  }));
+
+  return (
+    <>
+      <Stack>
+        <Typography noWrap>Image Classification</Typography>
+        <Container>
+          <div className={styles.image_container}>
+            {selectedFile ? (
+              <label htmlFor="contained-button-file">
+                <img
+                  src={preview}
+                  className={styles.preview}
+                  onClick={handleClickImage}
+                />
+              </label>
+            ) : (
+              <p>Choose image</p>
+            )}
+          </div>
+        </Container>
+        <Item
+          sx={{
+            my: 1,
+            mx: "auto",
+            minWidth: "224px",
+          }}
+        >
+          <div>Label: {predictedLabel}</div>
+        </Item>
+        <Item
+          sx={{
+            my: 1,
+            mx: "auto",
+            display: "flex",
+            justifyContent: "start",
+            alignItems: "center",
+            textAlign: "start",
+            maxWidth: "300px",
+          }}
+        >
+          <label
+            htmlFor="contained-button-file"
+            className={styles.custom_file_upload}
+          >
+            <FolderIcon sx={{ color: "black" }} />
+            <input
+              accept="image/*"
+              className={styles.input}
+              id="contained-button-file"
+              multiple
+              type="file"
+              onChange={onSelectFile}
+              ref={fileInputRef}
+            />
+          </label>
+          <Typography ml={1} sx={{ textOverflow: "ellipsis" }}>
+            {selectedFile?.name}
+          </Typography>
+        </Item>
+        <Item
+          sx={{
+            my: 1,
+            mx: "auto",
+            p: 2,
+            minWidth: "224px",
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+          }}
+        >
+          <IconButton sx={{ marginTop: "5px" }} onClick={handleUploadImage}>
+            <CloudUploadIcon sx={{ color: "black" }} />
+          </IconButton>
+          <Typography>Upload & classify</Typography>
+        </Item>
+      </Stack>
+    </>
+  );
+```
+
+You can get an idea here of how MUI elements are styled.
+
+One-off customization for specific MUI components can be styled with CSS using the ```sx={{ ... }}``` attribute.  Notice CSS properties are now camelCase and not snake-case.
+
+The docs for the [sx prop are here](https://mui.com/material-ui/react-box/).
+
+MUI also has Layout utilities
+
+```jsx
+<Box mt={1} justifyContent="flex-end">
+```
+
+```mt={2}``` is a shorthand form of 'margin-top'.  Check out the list of [shorthand utility classes here](https://mui.com/system/spacing/).
 
 ### POST the image
 
@@ -792,7 +990,6 @@ const ImageClassification = () => {
     <>
       <Stack>
         <Typography noWrap>Image Classification</Typography>
-
         <Container>
           <div className={styles.image_container}>
             {selectedFile ? (
@@ -808,7 +1005,6 @@ const ImageClassification = () => {
             )}
           </div>
         </Container>
-
         <Item
           sx={{
             my: 1,
@@ -818,7 +1014,6 @@ const ImageClassification = () => {
         >
           <div>Label: {predictedLabel}</div>
         </Item>
-
         <Item
           sx={{
             my: 1,
@@ -849,7 +1044,6 @@ const ImageClassification = () => {
             {selectedFile?.name}
           </Typography>
         </Item>
-
         <Item
           sx={{
             my: 1,
