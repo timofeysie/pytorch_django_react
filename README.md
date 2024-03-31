@@ -6,16 +6,16 @@ The current PyTorch functions are based on [Stefan Schneider's](https://stefanbs
 
 I have implemented a [Django REST Framework API](https://www.django-rest-framework.org/) to expose the use of the model to create a more real-world example of using a [React](https://react.dev/) frontend deploy ML projects.  This project is in a separate repo called [PyTorch Frontend](https://github.com/timofeysie/pytorch_frontend).
 
-This is just a basic demonstration deploying a pre-trained model for use on the web.
+This is just a basic demonstration deploying a pre-trained model for use on the web.  For me, a full stack ML engineer is a role that needs to have an awareness of Data Science and the AI landscape, but doesn't have to be an expert in all the fields.
 
-This covers just some of the roles that I consider a fullstack ML engineer is responsible.  Things that could also be considered part of this role that I am not covering at the moment include:
+This project covers just some of the roles that I consider a fullstack ML engineer may be responsible for.  Things that could also be considered part of this role that I am not covering at the moment include:
 
-- Design AI models
-- Data management
+- Designing AI models
+- Data management and pipelines
 - Infrastructure and architecture
 - Testing and validation
 
-In the future I hope to also include demonstrations of these skills so stay tuned!
+In the future I hope to also include demonstrations of some of these skills so stay tuned!
 
 ## Library details
 
@@ -784,7 +784,57 @@ The JavScript for the image file chooser input looks like this:
     return () => URL.revokeObjectURL(objectUrl);
   }, [selectedFile]);
 
-  ```
+```
+
+### The image POST
+
+There are two parts to this.  First, there is an event handler for when the user selects an image using the input file chooser shown above.
+
+```js
+  const [predictedLabel, setPredictedLabel] = useState("(select & upload to classify)");
+
+  /**
+   * Clear the predicted label and set the selected file object.
+   */
+  const onSelectFile = (e) => {
+    if (!e.target.files || e.target.files.length === 0) {
+      setSelectedFile(undefined);
+      return;
+    }
+    setPredictedLabel("");
+    setSelectedFile(e.target.files[0]);
+  };
+```
+
+The second is an event handler for when the user chooses the upload & classify button.  Async actions like this should be in a try/catch block which for now will just print out any error to the console.
+
+```js
+  /**
+   * Post the selected image and set the predicted label with the result.
+   * @param {*} event
+   * @returns
+   */
+  const handleUploadImage = async (event) => {
+    event.preventDefault();
+    setPredictedLabel("");
+    if (!selectedFile) {
+      return;
+    }
+    try {
+      const formData = new FormData();
+      formData.append("image", selectedFile);
+      const response = await axiosReq.post("/images/", formData);
+      // Set the predicted label based on the response
+      setPredictedLabel(response.data.predicted_label);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+```
+
+The [formData object instance](https://developer.mozilla.org/en-US/docs/Web/API/FormData) provides a way to construct a set of key/value pairs representing form fields and their values, which designed to be sent using the fetch(), XMLHttpRequest.send() or navigator.sendBeacon() methods. It uses the same format a form would use if the encoding type were set to "multipart/form-data".
+
+We use async/await to pause and set the predicted label when it arrives.
 
 ### The full layout
 
@@ -901,11 +951,9 @@ MUI also has Layout utilities
 
 ```mt={2}``` is a shorthand form of 'margin-top'.  Check out the list of [shorthand utility classes here](https://mui.com/system/spacing/).
 
-### POST the image
+### Full code
 
-Next, add the input fields for the post title and content and write the logic to store and update the state of the input fields.
-
-This is still a work in progress, so I will just paste the current component here for now.  I will be breaking this down into sections soon.
+This is still a work in progress, but in its current state, the component looks like this:
 
 ```js
 import { Container, IconButton, Stack } from "@mui/material";
@@ -1098,4 +1146,248 @@ Here is the associated css module: src\components\ImageClassification.module.css
 }
 ```
 
-Stay tuned!
+### Deploying the modal
+
+To start with, we will simply be using Heroku.  This would probably also work just as well with Vercel or other free/paid web hosts.  All we need at this point is web hosting.
+
+### ML cloud providers landscape
+
+I will just discuss a brief overview of other deployment options.  For starters there are the big three:
+
+- [Azure](https://portal.azure.com/)
+- [AWS](https://aws.amazon.com/)
+- [Google Cloud](https://cloud.google.com/)
+
+There is a lot more to ML engineering besides just a web host.  When doing ML fullstack engineering professionally it would be good to have experience with a cloud provider to train models, possibly in a distributed fashion, while recording training and evaluation metrics, etc.
+
+Azure has the [Machine Learning Studio](https://azure.microsoft.com/en-us/products/machine-learning) which Have enjoyed using in the past but it got quite expensive when you start paying for machine time to train models.
+
+With AWS, I have used Cognito and of course S3 buckets quite a lot.  I have never used their ML tools, and it would be interesting to see what their options are like these days.  I keep hearing about [SageMaker](https://aws.amazon.com/pm/sagemaker) to it would be good to have some experience with that also.
+
+Google also has a lot of [AI and machine learning products](https://cloud.google.com/products/ai) these days.  I have used [Google Colab](https://colab.research.google.com/) for data science though I usually prefer to run [Jupyter notebooks](https://jupyter.org/) locally on my laptop.
+
+I think it all depends on the company you might work for and what your goals are.  You can't do everything, so it does pay to specialize.
+
+It always helps to have knowledge of popular infrastructure choices like the following (advertising blurbs included):
+
+- [IaC](https://mlopsnow.com/blog/4-infrastructure-as-code-services-that-can-supercharge-your-ml-infrastructure/) (Infrastructure-as-Code): *For those serious about MLOps*
+- [Vertex AI](https://cloud.google.com/vertex-ai) Google Cloud: *everything you need to build and use generative AI*
+- [Algorithmia](https://www.datarobot.com/platform/mlops/?redirect_source=algorithmia.com): *Your Center of Excellence for Machine Learning Operations and Production AI*
+- [AWS EC2](https://aws.amazon.com/pm/ec2/) (Amazon Elastic Compute Cloud): *a web service that provides secure, resizable compute capacity in the cloud.*
+- [ML Infrastructure with Terraform](https://medium.com/@alexgidiotis_96550/building-ml-infrastructure-with-terraform-520b80874e8b): *open-source Infrastructure as Code (IaC) framework that enables users to define and provision their infrastructure using a high-level configuration language known as HashiCorp Configuration Language (HCL).*
+- [VPCs](https://en.wikipedia.org/wiki/Virtual_private_cloud) (Virtual Private Cloud): *on-demand configurable pool of shared resources allocated within a public cloud environment*
+
+### Deploying to Heroku
+
+We will deploy to two repos separately.  First for the backend.
+
+### Preparing the API for deployment
+
+In order to prepare our API for deployment here are some extra tasks.
+
+- make sure debug is off
+- add the root route to our API
+- add a default JSON renderer for production
+- creating a Procfile
+- installing a package needed to run the project on Heroku
+- creating the Heroku app
+- setup and production settings
+- fixing a few environment variables
+
+#### Turn off debug
+
+You can simply set debug to false, but if you want to continue to develop locally but have it turned off when deployed, change this:
+
+```py
+DEBUG = True
+```
+
+to this:
+
+```py
+DEBUG = 'DEV' in os.environ
+```
+
+#### Add the root route to our API
+
+This is just a simple way to indicate that the app been deployed successfully.
+
+To do this, create a new file in the DRF root directory pytorch_django\views.py:
+
+```py
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+
+
+@api_view()
+def root_route(request):
+    return Response({
+        "message": "You have reached the pytorch-django API"
+    })
+```
+
+Then the the pytorch_django\urls.py import the root_route and set that as the first default rout.
+
+```py
+from django.contrib import admin
+from django.urls import path, include
+from .views import root_route
+
+urlpatterns = [
+    path('', root_route),
+    path('admin/', admin.site.urls),
+    path('', include('image_classification.urls')),
+    path('', include('images.urls')),
+```
+
+### Add a default JSON renderer for production
+
+We may only want the in-browser interface to be available in development.  The frontend only uses JSON for this project.
+To do this, in settings.py, if the 'DEV' env variable is NOT present, set the rest framework's default renderer  
+classes attribute to JSONRenderer inside a list.
+
+### Create a Procfile
+
+The last to steps were option. This one is required.
+
+Creating a Procfile file will provide commands to Heroku to build and run a Python DRF app.
+
+Remember, it must be named correctly and not have any file extension, otherwise Heroku won’t recognize it
+
+Inside the Procfile, add these two commands
+
+```sh
+release: python manage.py makemigrations && python manage.py migrate
+web: gunicorn pytorch_django_react.wsgi
+```
+
+We will install this gunicorn in a minute.
+
+In settings.py file, update the value of the ALLOWED_HOSTS variable to include your Heroku app’s URL (we will get that next).
+
+```py
+ALLOWED_HOSTS = ['localhost', '<your_app_name>.herokuapp.com']
+```
+
+#### Installing a package needed to run the project on Heroku
+
+In the terminal of your IDE workspace, install gunicorn
+
+```sh
+pip3 install gunicorn django-cors-headers
+```
+
+Update your requirements.txt
+
+```sh
+pip freeze --local > requirements.txt
+```
+
+Add corsheaders to INSTALLED_APPS
+
+```py
+INSTALLED_APPS = [
+    ...
+    'dj_rest_auth.registration',
+    'corsheaders',
+    ...
+ ]
+```
+
+Add corsheaders middleware to the TOP of the MIDDLEWARE if you didn't already in a previous step, and also SITE_ID = 1:
+
+```py
+ SITE_ID = 1
+ MIDDLEWARE = [
+     'corsheaders.middleware.CorsMiddleware',
+     ...
+ ]
+```
+
+I'm not actually sure at this point what SITE_ID is for but I will find out and update this when I do.
+
+Set the DEBUG value to be True only if the DEV environment variable exists. This will mean it is True in development, and False in production
+
+```py
+DEBUG = 'DEV' in os.environ
+```
+
+Comment DEV back in env.py if you want.  I have run without this change, but here is what I have right now:
+
+```py
+import os
+os.environ['CLIENT_ORIGIN'] = 'http://127.0.0.1:5173'
+os.environ['DEV'] = '1'
+```
+
+Add, commit and push to GitHub.
+
+### The Stefan Schneider method
+
+There are some differences to the [article deployment section](https://stefanbschneider.github.io/blog/posts/pytorch-django/index.html#deployment-on-heroku).
+
+It's worth pointing as he has a [dedicated blog post](https://stefanbschneider.github.io/blog/posts/django-heroku/index.html) on the topic which might also be useful.  There can always be issues that show up because a detail is missed or something has changed in the way the web host works, or package version, so being able to go more in-depth might be necessary.
+
+Stefan mentions that he had some issues with the file structure.
+
+*For some reason, the default directory structure always breaks my Heroku deployment. It works, when removing the parent pytorch_django directory like this:*
+
+#### original structure when generating the project and app
+
+```txt
+pytorch_django
+    image_classification
+        ...
+    pytorch_django
+        ...
+    manage.py
+README.md
+```
+
+#### after removing the parent directory
+
+```txt
+image_classification
+    ...
+pytorch_django
+    ...
+manage.py
+README.md
+```
+
+However, out of the box this project has the structure shown in the second list.  It might be because we are using an older version of Django.
+
+### Create a Heroku app
+
+The process to create a new app on Heroku is documented on their site.
+
+- log into the Heroku Dashboard
+- click "New" and "Create new app"
+- name the app and select the region
+
+I didn't know this until I tried it, but pytorch_django will not work as an app name, as the validation warning says "This name should only contain lowercase letters, numbers, and dashes".
+
+So it will have to be pytorch-django.  A bit inconenient, as the GitHub repo is pytorch_django_react, the Django app is actualy just pytorch_django, and now the Heroku app is pytorch-django.
+
+So what does that mean for ths pytorch_django.wsgi.application in WSGI_APPLICATION?  Which one should that be?
+
+The app name in the wsgi.application setting refers to the Python module where the WSGI application object is located, and it doesn't necessarily have to match the exact app name used on the hosting platform (in this case, Heroku).The app name in the wsgi.application setting refers to the Python module where the WSGI application object is located, and it doesn't necessarily have to match the exact app name used on the hosting platform (in this case, Heroku).
+
+So this is the correct setting:
+
+```py
+WSGI_APPLICATION = 'pytorch_django.wsgi.application'
+```
+
+### Setup and production settings
+
+After creating the app on Heroku and enabling automatic deploys from the corresponding GitHub repo, set the following config variables (in Heroku: Settings > Config Vars):
+
+```txt
+DJANGO_SETTINGS_MODULE: pytorch_django.prod_settings
+DJANGO_SECRET_KEY: <randomly-generated-secret-key>
+```
+
+This indicates that Heroku should use a separate prod_settings.py rather than the settings.py used for development. This prod_settings.py simply overwrites and disables debug mode, sets the production secret key, and allowed hosts. It also makes use of the django_heroku package for further settings.
+
+We are NOT using this place as we have conditional logic in the settings.py file to account for prod vs. dev.

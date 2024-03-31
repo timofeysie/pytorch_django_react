@@ -27,14 +27,16 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-*q(f59t(2sib6e&79#s0zu)%z80wf^-l35w=f-v(3yv&ile4)@'
 
 # SECURITY WARNING: don't run with debug turned on in production!
+# DEBUG = 'DEV' in os.environ
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # Application definition
 
 INSTALLED_APPS = [
     'image_classification.apps.ImageClassificationConfig',
+    'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -44,7 +46,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'images',
 ]
-
+SITE_ID = 1
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
