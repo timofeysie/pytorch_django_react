@@ -1391,3 +1391,19 @@ DJANGO_SECRET_KEY: <randomly-generated-secret-key>
 This indicates that Heroku should use a separate prod_settings.py rather than the settings.py used for development. This prod_settings.py simply overwrites and disables debug mode, sets the production secret key, and allowed hosts. It also makes use of the django_heroku package for further settings.
 
 We are NOT using this place as we have conditional logic in the settings.py file to account for prod vs. dev.
+
+### Deployment errors
+
+I would be surprised if it worked the first time.  No surprises this time:
+
+```err
+       Collecting pytz==2023.3.post1 (from -r requirements.txt (line 72))
+         Downloading pytz-2023.3.post1-py2.py3-none-any.whl.metadata (22 kB)
+       ERROR: Ignored the following versions that require a different python version: 1.21.2 Requires-Python >=3.7,<3.11; 1.21.3 Requires-Python >=3.7,<3.11; 1.21.4 Requires-Python >=3.7,<3.11; 1.21.5 Requires-Python >=3.7,<3.11; 1.21.6 Requires-Python >=3.7,<3.11; 4.4.0 Requires-Python >=3.6,<3.9
+       ERROR: Could not find a version that satisfies the requirement pywin32==306 (from versions: none)
+       ERROR: No matching distribution found for pywin32==306
+ !     Push rejected, failed to compile Python app.
+ !     Push failed
+```
+
+ChatGPT says: *ince pywin32 is not required for your Django app to function properly, you can remove the pywin32==306 line from your requirements.txt file. Simply delete the line containing pywin32==306, save the file, and attempt the deployment again.*
