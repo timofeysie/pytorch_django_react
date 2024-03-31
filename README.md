@@ -1407,3 +1407,14 @@ I would be surprised if it worked the first time.  No surprises this time:
 ```
 
 ChatGPT says: *ince pywin32 is not required for your Django app to function properly, you can remove the pywin32==306 line from your requirements.txt file. Simply delete the line containing pywin32==306, save the file, and attempt the deployment again.*
+
+Then try again.  This turned out to be a very long deployment process.  And again, it fails:
+
+```err
+-----> Compressing...
+ !     Compiled slug size: 2.6G is too large (max is 500M).
+ !     See: http://devcenter.heroku.com/articles/slug-size
+ !     Push failed
+```
+
+2.6 gigs?  I guess it's the sample images I included.
