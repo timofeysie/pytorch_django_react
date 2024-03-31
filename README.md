@@ -1433,3 +1433,13 @@ node_modules/
 cloudinary_python.txt
 db.sqlite3
 ```
+
+```sh
+git rm -r --cached .
+PS C:\Users\timof\repos\django\pytorch_django_react> git rm -r --cached .
+rm '.gitignore'
+rm '.vscode/settings.json'
+rm 'Procfile'
+rm 'README.md'
+...
+```
