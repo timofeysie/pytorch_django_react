@@ -1246,6 +1246,18 @@ We may only want the in-browser interface to be available in development.  The f
 To do this, in settings.py, if the 'DEV' env variable is NOT present, set the rest framework's default renderer  
 classes attribute to JSONRenderer inside a list.
 
+It looks like this:
+
+```py
+REST_FRAMEWORK = {
+    ... 
+}
+if 'DEV' not in os.environ:
+    REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = [
+        'rest_framework.renderers.JSONRenderer',
+    ]
+```
+
 ### Create a Procfile
 
 The last to steps were option. This one is required.
@@ -1442,4 +1454,72 @@ rm '.vscode/settings.json'
 rm 'Procfile'
 rm 'README.md'
 ...
+
+git add .
+
+modified:   README.md
+        deleted:    __pycache__/env.cpython-310.pyc
+        deleted:    db.sqlite3
+        deleted:    env.py
+        deleted:    image_classification/__pycache__/__init__.cpython-310.pyc
+        ...
+
+git commit -m "remove ignored files"
 ```
+
+Seemed like that is the right output, but the push still fails.
+
+The static directory is needed, but not those files.
+
+However, I am seeing a lot of messages like this in the log output:
+
+```log
+Found another file with the destination path 'admin/js/calendar.js'. It will be ignored since only the first encountered file is collected. If this is not what you want, make sure every static file has a unique path.
+```
+
+Why would there be all these duplicates there?
+
+The only file I need in the static dir is this: static\imagenet_class_index.json  why is an admin directory there?
+
+How to find out what is causing such a big bundle size?
+
+Ask ChatGPT
+ChatGPT
+
+Poe
+
+To check the size of your project and identify the files contributing to its large size, you can follow these steps:
+
+Install the Heroku CLI if you haven't already. You can download it from the official Heroku website: https://devcenter.heroku.com/articles/heroku-cli
+
+Open a terminal or command prompt and log in to your Heroku account by running the following command:
+
+Copy
+heroku login
+Navigate to the root directory of your project in the terminal.
+
+Use the Heroku CLI to create a new Heroku app (if you haven't created one already) by running:
+
+Copy
+heroku create
+Deploy your project to Heroku by pushing it to the Heroku Git remote:
+
+Copy
+git push heroku main
+During the deployment process, you will see the output that includes the line "Compiled slug size: X is too large (max is 500M)." This indicates that the compiled slug size exceeds the maximum allowed size of 500MB.
+
+After the deployment fails, you can check the size of your project's slug by running the following command:
+
+Copy
+heroku run du -sh
+This command will display the total size of your project in a human-readable format.
+
+To investigate further and identify the files contributing to the large slug size, you can run the following command to list the files and their sizes within the slug:
+
+Copy
+heroku run bash -c "du -h -d 1"
+This command will provide a directory-wise breakdown of file sizes within the slug.
+
+By following these steps, you can determine the size of your project and identify the files that are contributing to the large slug size, helping you optimize your project and reduce its size to meet the maximum allowed limit.
+
+
