@@ -1418,3 +1418,18 @@ Then try again.  This turned out to be a very long deployment process.  And agai
 ```
 
 2.6 gigs?  I guess it's the sample images I included.
+
+Delete those and try again with no change.  What's going on?  Then I realize there is no .gitignore file.  How did that happen?  I thought that was a default file.  In my last DRF project I have one, but I don't recall making it.  It looks like this:
+
+```txt
+core.Microsoft*
+core.mongo*
+core.python*
+env.py
+__pycache__/
+*.py[cod]
+node_modules/
+.github/
+cloudinary_python.txt
+db.sqlite3
+```
