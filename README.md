@@ -1187,7 +1187,7 @@ In order to prepare our API for deployment here are some extra tasks.
 
 - make sure debug is off
 - add the root route to our API
-- add a default JSON renderer for production
+- add a default JSON renderer for production & remove the secret key
 - creating a Procfile
 - installing a package needed to run the project on Heroku
 - creating the Heroku app
@@ -1206,6 +1206,19 @@ to this:
 
 ```py
 DEBUG = 'DEV' in os.environ
+```
+
+Remove the value for SECRET_KEY and replace with the following code to use an environment variable instead
+
+```py
+# SECURITY WARNING: keep the secret key used in production secret
+SECRET_KEY = os.getenv('SECRET_KEY')
+```
+
+Set a NEW value for your SECRET_KEY environment variable in env.py, do NOT use the same one that has been published to GitHub in your commits
+
+```py
+os.environ.setdefault("SECRET_KEY", "RandomValueHere")
 ```
 
 #### Add the root route to our API
@@ -1240,7 +1253,7 @@ urlpatterns = [
     path('', include('images.urls')),
 ```
 
-### Add a default JSON renderer for production
+### Add a default JSON renderer for production & remove the secret key
 
 We may only want the in-browser interface to be available in development.  The frontend only uses JSON for this project.
 To do this, in settings.py, if the 'DEV' env variable is NOT present, set the rest framework's default renderer  
@@ -1334,192 +1347,429 @@ os.environ['DEV'] = '1'
 
 Add, commit and push to GitHub.
 
-### The Stefan Schneider method
+## Deploying the backend
 
-There are some differences to the [article deployment section](https://stefanbschneider.github.io/blog/posts/pytorch-django/index.html#deployment-on-heroku).
+The original article is a few years old and was deployed to Heroku when it was still the pre-eminent free hosting solution.  However, even with a paid basic account, the compiled slug size is 2.6G which is too large for Heroku which has a max size of 500M.
 
-It's worth pointing as he has a [dedicated blog post](https://stefanbschneider.github.io/blog/posts/django-heroku/index.html) on the topic which might also be useful.  There can always be issues that show up because a detail is missed or something has changed in the way the web host works, or package version, so being able to go more in-depth might be necessary.
+Other options are:
 
-Stefan mentions that he had some issues with the file structure.
+1. Amazon Web Services (AWS): AWS provides a wide range of services, including EC2 instances and Elastic Beanstalk, which can handle larger deployments and offer more flexibility in terms of storage and resources.
+2. Google Cloud Platform (GCP): GCP offers services such as Compute Engine and App Engine, which provide scalable infrastructure for hosting applications with larger file sizes.
+3. Microsoft Azure: Azure provides options like Azure App Service and Azure Virtual Machines, which can handle larger deployments and offer various storage and compute options.
 
-*For some reason, the default directory structure always breaks my Heroku deployment. It works, when removing the parent pytorch_django directory like this:*
+I would choose either 1 or 3.  Given the size of AWS and it's economies of scale, that's probably the best option, career-wise.
 
-#### original structure when generating the project and app
+### Deploying to EC2
 
-```txt
-pytorch_django
-    image_classification
-        ...
-    pytorch_django
-        ...
-    manage.py
-README.md
-```
+1. Sign in to the AWS Management Console and navigate to the EC2 dashboard.
 
-#### after removing the parent directory
+2. Choose "Launch Instance"
+
+3. Choose an Amazon Machine Image (AMI) for the instance. You can select an AMI that has Django pre-installed, or you can choose a basic AMI and install Django manually later.
+
+The Application and OS Images (Amazon Machine Image) Amazon Machine Image (AMI) has a free tier with these specs:
 
 ```txt
-image_classification
-    ...
-pytorch_django
-    ...
-manage.py
-README.md
+ami-0035ee596a0a12a7b (64-bit (x86), uefi-preferred) / ami-0694417fa0a0db845 (64-bit (Arm), uefi)
+Virtualization: hvm
+ENA enabled: true
+Root device type: ebs
 ```
 
-However, out of the box this project has the structure shown in the second list.  It might be because we are using an older version of Django.
+4. Choose the instance type with sufficient CPU and memory resources (TBD).
 
-### Create a Heroku app
+5. Choose launch the instance.
 
-The process to create a new app on Heroku is documented on their site.
+Create key pair (Private key file format .pem for use with OpenSSH)
 
-- log into the Heroku Dashboard
-- click "New" and "Create new app"
-- name the app and select the region
-
-I didn't know this until I tried it, but pytorch_django will not work as an app name, as the validation warning says "This name should only contain lowercase letters, numbers, and dashes".
-
-So it will have to be pytorch-django.  A bit inconenient, as the GitHub repo is pytorch_django_react, the Django app is actualy just pytorch_django, and now the Heroku app is pytorch-django.
-
-So what does that mean for ths pytorch_django.wsgi.application in WSGI_APPLICATION?  Which one should that be?
-
-The app name in the wsgi.application setting refers to the Python module where the WSGI application object is located, and it doesn't necessarily have to match the exact app name used on the hosting platform (in this case, Heroku).The app name in the wsgi.application setting refers to the Python module where the WSGI application object is located, and it doesn't necessarily have to match the exact app name used on the hosting platform (in this case, Heroku).
-
-So this is the correct setting:
-
-```py
-WSGI_APPLICATION = 'pytorch_django.wsgi.application'
-```
-
-### Setup and production settings
-
-After creating the app on Heroku and enabling automatic deploys from the corresponding GitHub repo, set the following config variables (in Heroku: Settings > Config Vars):
+#### Connect to your instance (Public IP address aka public-DNS)
 
 ```txt
-DJANGO_SETTINGS_MODULE: pytorch_django.prod_settings
-DJANGO_SECRET_KEY: <randomly-generated-secret-key>
+ssh -i pytorch-django.pem ec2-user@<public-DNS>
 ```
 
-This indicates that Heroku should use a separate prod_settings.py rather than the settings.py used for development. This prod_settings.py simply overwrites and disables debug mode, sets the production secret key, and allowed hosts. It also makes use of the django_heroku package for further settings.
-
-We are NOT using this place as we have conditional logic in the settings.py file to account for prod vs. dev.
-
-### Deployment errors
-
-I would be surprised if it worked the first time.  No surprises this time:
-
-```err
-       Collecting pytz==2023.3.post1 (from -r requirements.txt (line 72))
-         Downloading pytz-2023.3.post1-py2.py3-none-any.whl.metadata (22 kB)
-       ERROR: Ignored the following versions that require a different python version: 1.21.2 Requires-Python >=3.7,<3.11; 1.21.3 Requires-Python >=3.7,<3.11; 1.21.4 Requires-Python >=3.7,<3.11; 1.21.5 Requires-Python >=3.7,<3.11; 1.21.6 Requires-Python >=3.7,<3.11; 4.4.0 Requires-Python >=3.6,<3.9
-       ERROR: Could not find a version that satisfies the requirement pywin32==306 (from versions: none)
-       ERROR: No matching distribution found for pywin32==306
- !     Push rejected, failed to compile Python app.
- !     Push failed
-```
-
-ChatGPT says: *ince pywin32 is not required for your Django app to function properly, you can remove the pywin32==306 line from your requirements.txt file. Simply delete the line containing pywin32==306, save the file, and attempt the deployment again.*
-
-Then try again.  This turned out to be a very long deployment process.  And again, it fails:
-
-```err
------> Compressing...
- !     Compiled slug size: 2.6G is too large (max is 500M).
- !     See: http://devcenter.heroku.com/articles/slug-size
- !     Push failed
-```
-
-2.6 gigs?  I guess it's the sample images I included.
-
-Delete those and try again with no change.  What's going on?  Then I realize there is no .gitignore file.  How did that happen?  I thought that was a default file.  In my last DRF project I have one, but I don't recall making it.  It looks like this:
+Update the package manager by running the following command:
 
 ```txt
-core.Microsoft*
-core.mongo*
-core.python*
-env.py
-__pycache__/
-*.py[cod]
-node_modules/
-.github/
-cloudinary_python.txt
-db.sqlite3
+sudo yum update -y
+sudo yum install python3 python3-pip -y
+sudo yum install gcc python3-devel -y
+sudo yum install git -y
+git clone https://github.com/timofeysie/pytorch_django_react.git
+cd pytorch_django_react/
+pip3 install -r requirements.txt
 ```
+
+### Version errors
+
+```txt
+pip3 install -r requirements.txt
+...
+ERROR: Could not find a version that satisfies the requirement ipython==8.22.2 (from versions: 0.10, 0.10.1, 0.10.2, 0.11, 0.12, 0.12.1, 0.13, 0.13.1, 0.13.2, 1.0.0, 1.1.0, 1.2.0, 1.2.1, 2.0.0, 2.1.0, 2.2.0, 2.3.0, 2.3.1, 2.4.0, 2.4.1, 3.0.0, 3.1.0, 3.2.0, 3.2.1, 3.2.2, 3.2.3, 4.0.0b1, 4.0.0, 4.0.1, 4.0.2, 4.0.3, 4.1.0rc1, 4.1.0rc2, 4.1.0, 4.1.1, 4.1.2, 4.2.0, 4.2.1, 5.0.0b1, 5.0.0b2, 5.0.0b3, 5.0.0b4, 5.0.0rc1, 5.0.0, 5.1.0, 5.2.0, 5.2.1, 5.2.2, 5.3.0, 5.4.0, 5.4.1, 5.5.0, 5.6.0, 5.7.0, 5.8.0, 5.9.0, 5.10.0, 6.0.0rc1, 6.0.0, 6.1.0, 6.2.0, 6.2.1, 6.3.0, 6.3.1, 6.4.0, 6.5.0, 7.0.0b1, 7.0.0rc1, 7.0.0, 7.0.1, 7.1.0, 7.1.1, 7.2.0, 7.3.0, 7.4.0, 7.5.0, 7.6.0, 7.6.1, 7.7.0, 7.8.0, 7.9.0, 7.10.0, 7.10.1, 7.10.2, 7.11.0, 7.11.1, 7.12.0, 7.13.0, 7.14.0, 7.15.0, 7.16.0, 7.16.1, 7.16.2, 7.16.3, 7.17.0, 7.18.0, 7.18.1, 7.19.0, 7.20.0, 7.21.0, 7.22.0, 7.23.0, 7.23.1, 7.24.0, 7.24.1, 7.25.0, 7.26.0, 7.27.0, 7.28.0, 7.29.0, 7.30.0, 7.30.1, 7.31.0, 7.31.1, 7.32.0, 7.33.0, 7.34.0, 8.0.0a1, 8.0.0b1, 8.0.0rc1, 8.0.0, 8.0.1, 8.1.0, 8.1.1, 8.2.0, 8.3.0, 8.4.0, 8.5.0, 8.6.0, 8.7.0, 8.8.0, 8.9.0, 8.10.0, 8.11.0, 8.12.0, 8.12.1, 8.12.2, 8.12.3, 8.13.0, 8.13.1, 8.13.2, 8.14.0, 8.15.0, 8.16.0, 8.16.1, 8.17.0, 8.17.1, 8.17.2, 8.18.0, 8.18.1)
+ERROR: No matching distribution found for ipython==8.22.2
+[ec2-user@ip-172-31-15-175 pytorch_django_react]$ pip install --upgrade pip
+Defaulting to user installation because normal site-packages is not writeable
+Requirement already satisfied: pip in /usr/lib/python3.9/site-packages (21.3.1)
+Collecting pip
+  Downloading pip-24.0-py3-none-any.whl (2.1 MB)
+     |████████████████████████████████| 2.1 MB 4.9 MB/s
+Installing collected packages: pip
+Successfully installed pip-24.0
+[ec2-user@ip-172-31-15-175 pytorch_django_react]$ pip install -r requirements.txt
+...
+  Downloading ipykernel-6.29.3-py3-none-any.whl.metadata (6.3 kB)
+ERROR: Ignored the following yanked versions: 7.1.0, 7.30.0, 8.13.0, 8.16.0, 8.17.0
+ERROR: Ignored the following versions that require a different python version: 4.4.0 Requires-Python >=3.6,<3.9; 5.0 Requires-Python >=3.10; 5.0.1 Requires-Python >=3.10; 5.0.2 Requires-Python >=3.10; 5.0.3 Requires-Python >=3.10; 5.0a1 Requires-Python >=3.10; 5.0b1 Requires-Python >=3.10; 5.0rc1 Requires-Python >=3.10; 8.19.0 Requires-Python >=3.10; 8.20.0 Requires-Python >=3.10; 8.21.0 Requires-Python >=3.10; 8.22.0 Requires-Python >=3.10; 8.22.1 Requires-Python >=3.10; 8.22.2 Requires-Python >=3.10; 8.23.0 Requires-Python >=3.10
+ERROR: Could not find a version that satisfies the requirement ipython==8.22.2 (from versions: 0.10, 0.10.1, 0.10.2, 0.11, 0.12, 0.12.1, 0.13, 0.13.1, 0.13.2, 1.0.0, 1.1.0, 1.2.0, 1.2.1, 2.0.0, 2.1.0, 2.2.0, 2.3.0, 2.3.1, 2.4.0, 2.4.1, 3.0.0, 3.1.0, 3.2.0, 3.2.1, 3.2.2, 3.2.3, 4.0.0b1, 4.0.0, 4.0.1, 4.0.2, 4.0.3, 4.1.0rc1, 4.1.0rc2, 4.1.0, 4.1.1, 4.1.2, 4.2.0, 4.2.1, 5.0.0b1, 5.0.0b2, 5.0.0b3, 5.0.0b4, 5.0.0rc1, 5.0.0, 5.1.0, 5.2.0, 5.2.1, 5.2.2, 5.3.0, 5.4.0, 5.4.1, 5.5.0, 5.6.0, 5.7.0, 5.8.0, 5.9.0, 5.10.0, 6.0.0rc1, 6.0.0, 6.1.0, 6.2.0, 6.2.1, 6.3.0, 6.3.1, 6.4.0, 6.5.0, 7.0.0b1, 7.0.0rc1, 7.0.0, 7.0.1, 7.1.1, 7.2.0, 7.3.0, 7.4.0, 7.5.0, 7.6.0, 7.6.1, 7.7.0, 7.8.0, 7.9.0, 7.10.0, 7.10.1, 7.10.2, 7.11.0, 7.11.1, 7.12.0, 7.13.0, 7.14.0, 7.15.0, 7.16.0, 7.16.1, 7.16.2, 7.16.3, 7.17.0, 7.18.0, 7.18.1, 7.19.0, 7.20.0, 7.21.0, 7.22.0, 7.23.0, 7.23.1, 7.24.0, 7.24.1, 7.25.0, 7.26.0, 7.27.0, 7.28.0, 7.29.0, 7.30.1, 7.31.0, 7.31.1, 7.32.0, 7.33.0, 7.34.0, 8.0.0a1, 8.0.0b1, 8.0.0rc1, 8.0.0, 8.0.1, 8.1.0, 8.1.1, 8.2.0, 8.3.0, 8.4.0, 8.5.0, 8.6.0, 8.7.0, 8.8.0, 8.9.0, 8.10.0, 8.11.0, 8.12.0, 8.12.1, 8.12.2, 8.12.3, 8.13.1, 8.13.2, 8.14.0, 8.15.0, 8.16.1, 8.17.1, 8.17.2, 8.18.0, 8.18.1)
+ERROR: No matching distribution found for ipython==8.22.2
+```
+
+Since I develop on Windows, and the free tier suggested a Linux system (which is fine with me), I suppose there are different libraries available for Python.
+
+There could be three or more options to fix this:
+
+1. edit the requirements.txt to use the latest above version 8.18.1
+2. remove this from requirements.txt altogether
+3. use an instance that matches the developers environment
+
+Because I suspect there will other such errors once this one is fixed, I want to get with step 3.  With that in mind, here are the steps for deleting an instance and starting over.
+
+Among the Free tier eligible instances, I see Microsoft Windows Server 2022 Base
+ami-0fa4dfd1533851540 (64-bit (x86))
+Virtualization: hvm
+ENA enabled: true
+Root device type: ebs
+
+Connect to instance Info
+Connect to your instance i-0b9dbf93ecf14ca78 (pytorch-django-windows) using any of these option
+
+ssh -i pytorch-django.pem ec2-user@<public-DNS>
+
+#### Deleting an instance to start over
+
+On the EC2 Management Console "Instances" page.
+
+1. Select the instance in question by clicking the checkbox next to it.
+2. click on the"Instance State" menu choose "Terminate."
+
+To stop the instance temporarily, click on the "Actions" button, select "Instance State," and then choose "Stop." This will retain the instance but halt its operation.
+To convert the instance to a different instance type, you will need to perform a "Stop" action first. Once the instance is stopped, select the instance, click on the "Actions" button, and choose "Instance Settings" > "Change Instance Type." From there, you can select the desired instance type and confirm the changes.
+Note: Converting the instance type may involve additional costs, depending on the pricing of the new instance type.
+
+Confirm any prompts or warnings that appear before proceeding with the action.
+
+#### Using a Windows Server instance
+
+The profile for Microsoft Windows Server 2022 Base now means that we can't usee SSH to login.
+
+The SSH approach for connecting to a Windows Server EC2 instance differs from connecting to a Linux instance. Windows Server instances on AWS typically use Remote Desktop Protocol (RDP) for remote access instead of SSH.
+
+##### First you will need the username and password
+
+Click on the "Actions" button and choose "Get Windows Password."
+
+In the "Get Windows Password" dialog box, click on the "Choose File" button and browse to select the private key file (.pem) associated with the key pair used to launch the instance.
+
+Click on the "Decrypt Password" button. This will decrypt the administrator password using the private key file.
+
+The decrypted password will be displayed in the "Windows Password" column. You can copy the password or download it as a text file.
+
+##### To connect to a Windows Server EC2 instance
+
+1. Obtain the public IP or public DNS of your Windows Server EC2 instance from the AWS Management Console.
+
+Ensure that the security group associated with your Windows Server instance allows inbound RDP traffic on port 3389. You can modify the inbound rules of the security group to allow RDP access from your IP address or range.
+
+Open the Remote Desktop client on your Windows laptop running Windows 11. You can find the Remote Desktop client by searching in the Start menu or using the "Remote Desktop Connection" application.
+
+In the Remote Desktop client, enter the public IP or public DNS of your Windows Server instance in the "Computer" field.
+
+Click on "Connect" to initiate the RDP connection.
+
+If prompted, enter the username and password for the Windows Server instance. You can use the default username "Administrator" for Windows Server instances, or the username you specified during the instance launch.
+
+Once connected, you will have remote access to the Windows Server instance as if you were using it locally.
+
+This is basically a computer desktop in the window.  You now open a command prompt and get to work.  The big differences in that is hella slow.  You have network calls back and forth, so there is a painful lag.  Patience here is a virtue.
+
+### Continue setup
+
+Rather than starting off with the command line, we will need to install our dependencies the old fashion way.
+
+Download and install [Python](https://www.python.org/downloads/windows/)
+
+Download and install [git](https://git-scm.com/download/win).
 
 ```sh
-git rm -r --cached .
-PS C:\Users\timof\repos\django\pytorch_django_react> git rm -r --cached .
-rm '.gitignore'
-rm '.vscode/settings.json'
-rm 'Procfile'
-rm 'README.md'
-...
-
-git add .
-
-modified:   README.md
-        deleted:    __pycache__/env.cpython-310.pyc
-        deleted:    db.sqlite3
-        deleted:    env.py
-        deleted:    image_classification/__pycache__/__init__.cpython-310.pyc
-        ...
-
-git commit -m "remove ignored files"
+git clone https://github.com/timofeysie/pytorch_django_react.git
+cd pytorch_django_react/
+pip3 install -r requirements.txt
 ```
 
-Seemed like that is the right output, but the push still fails.
+Before you can run the app locally, there are a few more things to do.
 
-The static directory is needed, but not those files.
+Since it's a fresh install, we need to run migrations and create a new super user.
 
-However, I am seeing a lot of messages like this in the log output:
-
-```log
-Found another file with the destination path 'admin/js/calendar.js'. It will be ignored since only the first encountered file is collected. If this is not what you want, make sure every static file has a unique path.
+```sh
+python manage.py makemigrations
+python manage.py migrate
+python manage.py createsuperuser
 ```
 
-Why would there be all these duplicates there?
+We will also need to create a new env.py file like this:
 
-The only file I need in the static dir is this: static\imagenet_class_index.json  why is an admin directory there?
+```py
+import os
+os.environ['CLIENT_ORIGIN'] = 'http://127.0.0.1:5173'
+os.environ['DEV'] = '1'
+os.environ.setdefault("SECRET_KEY", "RandomValueHereRandomValueHereRandomValueHere")
+```
 
-How to find out what is causing such a big bundle size?
+You can use a system editor, or [VSCode](https://code.visualstudio.com/docs/?dv=win64user) can be used to create that file if you want to download that.
 
-Ask ChatGPT
-ChatGPT
+#### Create a systemd service
 
-Poe
+To create a systemd service file to run the Django app as a service on the EC2 instance, follow these steps:
 
-To check the size of your project and identify the files contributing to its large size, you can follow these steps:
+1. Create a file called `myapp.service` (e.g., using Notepad) with the following contents:
 
-Install the Heroku CLI if you haven't already. You can download it from the official Heroku website: https://devcenter.heroku.com/articles/heroku-cli
+\```ini
+[Unit]
+Description=Django App
 
-Open a terminal or command prompt and log in to your Heroku account by running the following command:
+[Service]
+User=ec2-user
+WorkingDirectory=C:\path\to\myapp
+ExecStart=C:\Python37\python.exe manage.py runserver 0.0.0.0:8000
+Restart=always
 
-Copy
-heroku login
-Navigate to the root directory of your project in the terminal.
+[Install]
+WantedBy=multi-user.target
+\```
 
-Use the Heroku CLI to create a new Heroku app (if you haven't created one already) by running:
+Replace `C:\path\to\myapp` with the path to your Django app directory, and modify `C:\Python37\python.exe` to the path where your Python executable is located (if different).
 
-Copy
-heroku create
-Deploy your project to Heroku by pushing it to the Heroku Git remote:
+2. Save the file in the directory: `C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp\`
 
-Copy
-git push heroku main
-During the deployment process, you will see the output that includes the line "Compiled slug size: X is too large (max is 500M)." This indicates that the compiled slug size exceeds the maximum allowed size of 500MB.
+   This will make the service start automatically whenever the Windows instance is restarted.
 
-After the deployment fails, you can check the size of your project's slug by running the following command:
+#### Start the systemd service
 
-Copy
-heroku run du -sh
-This command will display the total size of your project in a human-readable format.
+To start the systemd service, follow these steps:
 
-To investigate further and identify the files contributing to the large slug size, you can run the following command to list the files and their sizes within the slug:
+1. Open Command Prompt as administrator.
 
-Copy
-heroku run bash -c "du -h -d 1"
-This command will provide a directory-wise breakdown of file sizes within the slug.
+2. Run the following commands:
 
-By following these steps, you can determine the size of your project and identify the files that are contributing to the large slug size, helping you optimize your project and reduce its size to meet the maximum allowed limit.
+```txt
+sc start myapp
+sc config myapp start=auto
+```
 
+Once these steps are complete, your Django app should be fully deployed and accessible via the internet.
 
+#### Installing and Configuring Nginx
+
+To install and configure Nginx on Windows, follow these steps:
+
+1. Download the Nginx Windows distribution from the official Nginx website (https://nginx.org/en/download.html).
+
+2. Extract the downloaded archive to a directory of your choice, e.g., `C:\nginx`.
+
+3. Open the `nginx.conf` file located in the `conf` directory within the Nginx installation directory (e.g., `C:\nginx\conf\nginx.conf`) using a text editor.
+
+4. Replace the contents of the `nginx.conf` file with the following configuration:
+
+\```plaintext
+http {
+    server {
+        listen 80;
+        server_name example.com;
+
+        location /static/ {
+            alias C:\path\to\static\files;
+        }
+
+        location / {
+            proxy_pass http://127.0.0.1:8000;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+    }
+}
+\```
+
+Replace `example.com` with your domain name or server IP address, and `C:\path\to\static\files` with the path to your static files directory.
+
+5. Save the `nginx.conf` file.
+
+#### Test and Start Nginx
+
+To test and start Nginx, follow these steps:
+
+1. Open Command Prompt as administrator.
+
+2. Change the directory to where Nginx is installed. For example: ```cd C:\nginx```
+
+3. Test the Nginx configuration by running the following command: ```nginx.exe -t```  If there are any errors in the configuration, they will be displayed in the output. Otherwise, you should see a message indicating that the configuration is OK.
+
+4. Start Nginx by running the following command: ```nginx.exe```
+
+Once these steps are complete, Nginx should be serving your Django app. You can test the deployment by visiting your domain name or server IP address in a web browser.
+
+#### Running the Django App
+
+To run the Django app using Gunicorn on Windows, follow these steps:
+
+1. Open Command Prompt as administrator.
+
+2. Change the directory to the root directory of your Django app.
+
+3. Start the Gunicorn server using the following command: ```gunicorn myapp.wsgi:application --bind 127.0.0.1:8000``` (Replace `myapp` with the name of your Django app.)
+
+4. Test the Gunicorn server by visiting `http://127.0.0.1:8000` in a web browser. You should see your Django app running.
+
+5. To run the Gunicorn server in the background, use the following command: ```start /B gunicorn myapp.wsgi:application --bind 127.0.0.1:8000```
+This command starts the Gunicorn server in the background.
+
+6. To stop the Gunicorn server, open Task Manager, go to the "Processes" tab, find the Gunicorn process, and click "End Process" or use the `taskkill` command.
+
+7. To automate the running of the Gunicorn server and ensure it starts automatically after a server reboot, you can create a Windows Service using a tool like NSSM (Non-Sucking Service Manager) (https://nssm.cc/download).
+
+   Follow the documentation provided by NSSM to create a Windows Service for your Gunicorn command.
+
+#### RestartApologies for the confusion. Here's the previous answer provided in raw Markdown format:
+
+Create a systemd service
+To create a systemd service file to run the Django app as a service on the EC2 instance, follow these steps:
+
+Create a file called myapp.service (e.g., using Notepad) with the following contents:
+
+```ini
+[Unit]
+Description=Django App
+
+[Service]
+User=ec2-user
+WorkingDirectory=C:\path\to\myapp
+ExecStart=C:\Python37\python.exe manage.py runserver 0.0.0.0:8000
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Replace C:\path\to\myapp with the path to your Django app directory, and modify C:\Python37\python.exe to the path where your Python executable is located (if different).
+
+Save the file in the directory: C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp\
+
+This will make the service start automatically whenever the Windows instance is restarted.
+
+Start the systemd service
+To start the systemd service, follow these steps:
+
+Open Command Prompt as administrator.
+
+Run the following commands:
+
+```txt
+sc start myapp
+sc config myapp start=auto
+```
+
+Once these steps are complete, your Django app should be fully deployed and accessible via the internet.
+
+Installing and Configuring Nginx
+To install and configure Nginx on Windows, follow these steps:
+
+Download the Nginx Windows distribution from the official Nginx website (https://nginx.org/en/download.html).
+
+Extract the downloaded archive to a directory of your choice, e.g., C:\nginx.
+
+Open the nginx.conf file located in the conf directory within the Nginx installation directory (e.g., C:\nginx\conf\nginx.conf) using a text editor.
+
+Replace the contents of the nginx.conf file with the following configuration:
+
+```txt
+http {
+    server {
+        listen 80;
+        server_name example.com;
+
+        location /static/ {
+            alias C:\path\to\static\files;
+        }
+
+        location / {
+            proxy_pass http://127.0.0.1:8000;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+        }
+    }
+}
+```
+
+Replace example.com with your domain name or server IP address, and C:\path\to\static\files with the path to your static files directory.
+
+Save the nginx.conf file.
+
+#### Test and Start Nginx
+
+To test and start Nginx, follow these steps:
+
+Open Command Prompt as administrator.
+
+Change the directory to where Nginx is installed. For example:
+
+```txt
+cd C:\nginx
+```
+
+Test the Nginx configuration by running the following command:
+
+```txt
+nginx.exe -t
+```
+
+If there are any errors in the configuration, they will be displayed in the output. Otherwise, you should see a message indicating that the configuration is OK.
+
+Start Nginx by running the following command:
+
+```txt
+nginx.exe
+Once these steps are complete, Nginx should be serving your Django app. You can test the deployment by visiting your domain name or server IP address in a web browser.
+```
+
+#### Running the Django App
+
+To run the Django app using Gunicorn on Windows, follow these steps:
+
+Open Command Prompt as administrator.
+
+Change the directory to the root directory of your Django app.
+
+Start the Gunicorn server using the following command:
+
+```txt
+gunicorn myapp.wsgi:application --bind 127.0.0.1:8000
+```
+
+Replace myapp with the name of your Django app.
+
+Test the Gunicorn server by visiting http://127.0.0.1:8000 in a web browser. You should see your Django app running.
+
+To run the Gunicorn server in the background, use the following command:
+
+```txt
+start /B gunicorn myapp.wsgi:application --bind 127.0.0.1:8000
+```
+
+This command starts the Gunicorn server in the background.
+
+To stop the Gunicorn server, open Task Manager, go to the "Processes" tab, find the Gunicorn process, and click "End Process" or use the taskkill command.
+
+To automate the running of the Gunicorn server and ensure it starts automatically after a server reboot, you can create a Windows Service using a tool like NSSM (Non-Sucking Service Manager) (https://nssm.cc/download).
+
+Follow the documentation provided by NSSM to create a Windows Service for your Gunicorn command.
+
+Restart
