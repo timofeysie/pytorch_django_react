@@ -4,7 +4,7 @@ import json
 import os
 
 from torchvision import models
-from torchvision import transforms
+from torchvision.transforms import v2
 from PIL import Image
 from django.shortcuts import render
 from django.conf import settings
@@ -30,10 +30,10 @@ def transform_image(image_bytes):
     Transform image into required DenseNet format: 224x224 with 3 RGB channels and normalized.
     Return the corresponding tensor.
     """
-    my_transforms = transforms.Compose([transforms.Resize(255),
-                                        transforms.CenterCrop(224),
-                                        transforms.ToTensor(),
-                                        transforms.Normalize(
+    my_transforms = v2.Compose([v2.Resize(255),
+                                        v2.CenterCrop(224),
+                                        v2.ToTensor(),
+                                        v2.Normalize(
                                             [0.485, 0.456, 0.406],
                                             [0.229, 0.224, 0.225])])
     image = Image.open(io.BytesIO(image_bytes))
@@ -43,6 +43,9 @@ def transform_image(image_bytes):
 def get_prediction(image_bytes):
     """For given image bytes, predict the label using the pretrained DenseNet"""
     tensor = transform_image(image_bytes)
+    print(f"Shape of tensor: {tensor.shape}")
+    print(f"Datatype of tensor: {tensor.dtype}")
+    print(f"Device tensor is stored on: {tensor.device}")
     outputs = model.forward(tensor)
     _, y_hat = outputs.max(1)
     predicted_idx = str(y_hat.item())

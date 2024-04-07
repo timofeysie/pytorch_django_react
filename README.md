@@ -1447,7 +1447,7 @@ ssh -i pytorch-django.pem ec2-user@<public-DNS>
 
 #### Deleting an instance to start over
 
-On the EC2 Management Console "Instances" page.
+On the [EC2 Management Console](https://ap-southeast-2.console.aws.amazon.com/ec2/home?region=ap-southeast-2#Instances:instanceState=running) "Instances" page.
 
 1. Select the instance in question by clicking the checkbox next to it.
 2. click on the"Instance State" menu choose "Terminate."
@@ -1527,13 +1527,15 @@ os.environ.setdefault("SECRET_KEY", "RandomValueHereRandomValueHereRandomValueHe
 
 You can use a system editor, or [VSCode](https://code.visualstudio.com/docs/?dv=win64user) can be used to create that file if you want to download that.
 
+At this point you should be able to run the app on the remote desktop instance the same as you should locally on your app and make sure it works.
+
 #### Create a systemd service
 
 To create a systemd service file to run the Django app as a service on the EC2 instance, follow these steps:
 
-1. Create a file called `myapp.service` (e.g., using Notepad) with the following contents:
+1. Create a file called `myapp.service` (e.g., using Notepad or VSCode) with the following contents:
 
-\```ini
+```ini
 [Unit]
 Description=Django App
 
@@ -1545,7 +1547,7 @@ Restart=always
 
 [Install]
 WantedBy=multi-user.target
-\```
+```
 
 Replace `C:\path\to\myapp` with the path to your Django app directory, and modify `C:\Python37\python.exe` to the path where your Python executable is located (if different).
 
@@ -1636,140 +1638,4 @@ This command starts the Gunicorn server in the background.
 
 7. To automate the running of the Gunicorn server and ensure it starts automatically after a server reboot, you can create a Windows Service using a tool like NSSM (Non-Sucking Service Manager) (https://nssm.cc/download).
 
-   Follow the documentation provided by NSSM to create a Windows Service for your Gunicorn command.
-
-#### RestartApologies for the confusion. Here's the previous answer provided in raw Markdown format:
-
-Create a systemd service
-To create a systemd service file to run the Django app as a service on the EC2 instance, follow these steps:
-
-Create a file called myapp.service (e.g., using Notepad) with the following contents:
-
-```ini
-[Unit]
-Description=Django App
-
-[Service]
-User=ec2-user
-WorkingDirectory=C:\path\to\myapp
-ExecStart=C:\Python37\python.exe manage.py runserver 0.0.0.0:8000
-Restart=always
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Replace C:\path\to\myapp with the path to your Django app directory, and modify C:\Python37\python.exe to the path where your Python executable is located (if different).
-
-Save the file in the directory: C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp\
-
-This will make the service start automatically whenever the Windows instance is restarted.
-
-Start the systemd service
-To start the systemd service, follow these steps:
-
-Open Command Prompt as administrator.
-
-Run the following commands:
-
-```txt
-sc start myapp
-sc config myapp start=auto
-```
-
-Once these steps are complete, your Django app should be fully deployed and accessible via the internet.
-
-Installing and Configuring Nginx
-To install and configure Nginx on Windows, follow these steps:
-
-Download the Nginx Windows distribution from the official Nginx website (https://nginx.org/en/download.html).
-
-Extract the downloaded archive to a directory of your choice, e.g., C:\nginx.
-
-Open the nginx.conf file located in the conf directory within the Nginx installation directory (e.g., C:\nginx\conf\nginx.conf) using a text editor.
-
-Replace the contents of the nginx.conf file with the following configuration:
-
-```txt
-http {
-    server {
-        listen 80;
-        server_name example.com;
-
-        location /static/ {
-            alias C:\path\to\static\files;
-        }
-
-        location / {
-            proxy_pass http://127.0.0.1:8000;
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-        }
-    }
-}
-```
-
-Replace example.com with your domain name or server IP address, and C:\path\to\static\files with the path to your static files directory.
-
-Save the nginx.conf file.
-
-#### Test and Start Nginx
-
-To test and start Nginx, follow these steps:
-
-Open Command Prompt as administrator.
-
-Change the directory to where Nginx is installed. For example:
-
-```txt
-cd C:\nginx
-```
-
-Test the Nginx configuration by running the following command:
-
-```txt
-nginx.exe -t
-```
-
-If there are any errors in the configuration, they will be displayed in the output. Otherwise, you should see a message indicating that the configuration is OK.
-
-Start Nginx by running the following command:
-
-```txt
-nginx.exe
-Once these steps are complete, Nginx should be serving your Django app. You can test the deployment by visiting your domain name or server IP address in a web browser.
-```
-
-#### Running the Django App
-
-To run the Django app using Gunicorn on Windows, follow these steps:
-
-Open Command Prompt as administrator.
-
-Change the directory to the root directory of your Django app.
-
-Start the Gunicorn server using the following command:
-
-```txt
-gunicorn myapp.wsgi:application --bind 127.0.0.1:8000
-```
-
-Replace myapp with the name of your Django app.
-
-Test the Gunicorn server by visiting http://127.0.0.1:8000 in a web browser. You should see your Django app running.
-
-To run the Gunicorn server in the background, use the following command:
-
-```txt
-start /B gunicorn myapp.wsgi:application --bind 127.0.0.1:8000
-```
-
-This command starts the Gunicorn server in the background.
-
-To stop the Gunicorn server, open Task Manager, go to the "Processes" tab, find the Gunicorn process, and click "End Process" or use the taskkill command.
-
-To automate the running of the Gunicorn server and ensure it starts automatically after a server reboot, you can create a Windows Service using a tool like NSSM (Non-Sucking Service Manager) (https://nssm.cc/download).
-
 Follow the documentation provided by NSSM to create a Windows Service for your Gunicorn command.
-
-Restart
