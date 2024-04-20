@@ -1173,9 +1173,12 @@ It always helps to have knowledge of popular infrastructure choices like the fol
 - [IaC](https://mlopsnow.com/blog/4-infrastructure-as-code-services-that-can-supercharge-your-ml-infrastructure/) (Infrastructure-as-Code): *For those serious about MLOps*
 - [Vertex AI](https://cloud.google.com/vertex-ai) Google Cloud: *everything you need to build and use generative AI*
 - [Algorithmia](https://www.datarobot.com/platform/mlops/?redirect_source=algorithmia.com): *Your Center of Excellence for Machine Learning Operations and Production AI*
-- [AWS EC2](https://aws.amazon.com/pm/ec2/) (Amazon Elastic Compute Cloud): *a web service that provides secure, resizable compute capacity in the cloud.*
+- [AWS EC2](https://aws.amazon.com/pm/ec2/) (Elastic Compute Cloud): *a web service that provides secure, resizable compute capacity in the cloud.*
+- [AWS ECR](https://aws.amazon.com/blogs/containers/amazon-ecr-in-multi-account-and-multi-region-architectures/) (Elastic Container Registry) a managed container registry offering high-performance hosting to deploy app images and artifacts and workloads across AWS services.
 - [ML Infrastructure with Terraform](https://medium.com/@alexgidiotis_96550/building-ml-infrastructure-with-terraform-520b80874e8b): *open-source Infrastructure as Code (IaC) framework that enables users to define and provision their infrastructure using a high-level configuration language known as HashiCorp Configuration Language (HCL).*
 - [VPCs](https://en.wikipedia.org/wiki/Virtual_private_cloud) (Virtual Private Cloud): *on-demand configurable pool of shared resources allocated within a public cloud environment*
+
+This list is from the perspective of a ML fullstack engineer that as noted previously may not be an AI expert, but must be adept at deploying all parts of a ML system as well as crafting how the user interacts with them.
 
 ### Deploying to Heroku
 
@@ -1533,7 +1536,7 @@ At this point you should be able to run the app on the remote desktop instance t
 
 To create a systemd service file to run the Django app as a service on the EC2 instance, follow these steps:
 
-1. Create a file called `myapp.service` (e.g., using Notepad or VSCode) with the following contents:
+1. Create a file called `pytorchdjango.service` (e.g., using Notepad or VSCode) with the following contents:
 
 ```ini
 [Unit]
@@ -1549,26 +1552,32 @@ Restart=always
 WantedBy=multi-user.target
 ```
 
-Replace `C:\path\to\myapp` with the path to your Django app directory, and modify `C:\Python37\python.exe` to the path where your Python executable is located (if different).
+Replace `C:\path\to\myapp` with the path to your Django app directory (`C:\Users\Administrator\pytorch_django_react` for me), and modify `C:\Python37\python.exe` to the path where your Python executable is located (if different).
 
-2. Save the file in the directory: `C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp\`
+On my remote Windows box, when I type ```python --version" I see Python 3.11.9```.  But running this command returns the path:
 
-   This will make the service start automatically whenever the Windows instance is restarted.
+```sh
+PS C:\Users\Administrator\pytorch_django_react> python -c "import os, sys; print(os.path.dirname(sys.executable))"
+C:\Users\Administrator\AppData\Local\Programs\Python\Python311
+```
+
+So I can use that setting for the ExecStart value.  Next, the location of the StartUp directory seems to be different than what I was expecting.  This is because the ProgramData directory is hidden by default.  Choose the "View" tab in a file explorer and tick the "Show hidden files" choice and then that path will appear.
+
+2. Save the file in the directory: `C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp\pytorchDjango.service`
+
+Navigate to the directory where your service file pytorchdjango.service is located and run this command:
+
+```sh
+sc.exe create pytorchdjango binPath= "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\python.exe C:\path\to\myapp\manage.py runserver 0.0.0.0:8000" start=auto
+```
+
+This will make the service start automatically whenever the Windows instance is restarted.
 
 #### Start the systemd service
 
 To start the systemd service, follow these steps:
 
 1. Open Command Prompt as administrator.
-
-2. Run the following commands:
-
-```txt
-sc start myapp
-sc config myapp start=auto
-```
-
-Once these steps are complete, your Django app should be fully deployed and accessible via the internet.
 
 #### Installing and Configuring Nginx
 
