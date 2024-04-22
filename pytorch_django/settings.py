@@ -23,6 +23,13 @@ if 'DEV' not in os.environ:
     REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = [
         'rest_framework.renderers.JSONRenderer',
     ]
+# Running on the remote EC2 instance
+else:
+    REST_FRAMEWORK = {
+        'DEFAULT_RENDERER_CLASSES': [
+            # Add any additional renderer classes for production if needed
+        ]
+    }
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
@@ -34,7 +41,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 # DEBUG = 'DEV' in os.environ
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '172.31.29.15', '3.26.241.7']
 
 # Application definition
 
@@ -69,6 +76,7 @@ if 'CLIENT_ORIGIN' in os.environ:
 else:
     CORS_ALLOWED_ORIGINS = [
         'http://localhost:3000',
+        'https://pytorch-frontend-kunwflnck-timofeysies-projects.vercel.app'
     ]
 
 CORS_ALLOW_CREDENTIALS = True

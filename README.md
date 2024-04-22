@@ -1561,6 +1561,8 @@ PS C:\Users\Administrator\pytorch_django_react> python -c "import os, sys; print
 C:\Users\Administrator\AppData\Local\Programs\Python\Python311
 ```
 
+The value of ExecStart then is ```C:\Users\Administrator\AppData\Local\Programs\Python\Python311\python.exe```
+
 So I can use that setting for the ExecStart value.  Next, the location of the StartUp directory seems to be different than what I was expecting.  This is because the ProgramData directory is hidden by default.  Choose the "View" tab in a file explorer and tick the "Show hidden files" choice and then that path will appear.
 
 2. Save the file in the directory: `C:\ProgramData\Microsoft\Windows\Start Menu\Programs\StartUp\pytorchDjango.service`
@@ -1571,7 +1573,39 @@ Navigate to the directory where your service file pytorchdjango.service is locat
 sc.exe create pytorchdjango binPath= "C:\Users\Administrator\AppData\Local\Programs\Python\Python311\python.exe C:\path\to\myapp\manage.py runserver 0.0.0.0:8000" start=auto
 ```
 
+So from directory ```C:\Users\Administrator\pytorch_django_react```:
+
+```sh
+C:\Users\Administrator\AppData\Local\Programs\Python\Python311\python.exe  C:\Users\Administrator\pytorch_django_react\manage.py runserver 0.0.0.0:8000
+```
+
 This will make the service start automatically whenever the Windows instance is restarted.
+
+Those values could be set in env system variables, but honestly, I think this manual method of setting up Django on EC2 is not the best way to go.  I will have a look at pre-configured Docker instances after this for sure.
+
+### Turn off the firewall for Python
+
+This may be required depending on the EC2 instance setup.
+
+1. Open the Windows Security app by searching for it in the Start menu.
+2. Click on "Firewall & network protection" in the app's main window.
+3. In the next window, click on "Allow an app through firewall" under the "Firewall & network protection" section.
+4. Click on the "Change settings" button. You may need administrator privileges to make changes.
+5. Scroll down the list of apps and features until you find the entry for Python or the specific Python executable you are using (python.exe).
+
+### EC2 inbound rules
+
+On the [EC2 dashboard](https://ap-southeast-2.console.aws.amazon.com/ec2/home) you have to select the running instance and choose the security tab under that and add a rule to allow port 8000 to be accessed.
+
+In the details tab, you will see the IP address for external use.  In my case its Public IPv4: 3.26.241.7.
+
+Update the ALLOWED_HOSTS settings.py to include the IP address '3.26.241.7'.  This is actually done in our env.py file:
+
+```py
+os.environ['CLIENT_ORIGIN'] = 'http://3.26.241.7:8000/'
+```
+
+Then go to [http://3.26.241.7:8000/](http://3.26.241.7:8000/) and I can see the root route response: ```{"message":"You have reached the PyTorch Django DRF API"}```.
 
 #### Start the systemd service
 
@@ -1648,3 +1682,23 @@ This command starts the Gunicorn server in the background.
 7. To automate the running of the Gunicorn server and ensure it starts automatically after a server reboot, you can create a Windows Service using a tool like NSSM (Non-Sucking Service Manager) (https://nssm.cc/download).
 
 Follow the documentation provided by NSSM to create a Windows Service for your Gunicorn command.
+
+## Deploying the frontend
+
+In this case, I chose Vercel to host the frontend.  I have used Heroku a lot for simple projects, and Vercel is similar with a few added features like preview deployments.
+
+Basically you just choose your GitHub project after connecting your account with GitHub and it deploys the main branch.
+
+Once you have the url, you need to add the string to the CORS_ALLOWED_ORIGINS array in settings.py, as seen in the last line here:
+
+```py
+if 'CLIENT_ORIGIN' in os.environ:
+    CORS_ALLOWED_ORIGINS = [
+        os.environ.get('CLIENT_ORIGIN')
+    ]
+else:
+    CORS_ALLOWED_ORIGINS = [
+        'http://localhost:3000',
+        'https://pytorch-frontend-kunwflnck-timofeysies-projects.vercel.app'
+    ]
+```
