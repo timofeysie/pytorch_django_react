@@ -76,7 +76,7 @@ if 'CLIENT_ORIGIN' in os.environ:
 else:
     CORS_ALLOWED_ORIGINS = [
         'http://localhost:3000',
-        'https://pytorch-frontend-kunwflnck-timofeysies-projects.vercel.app'
+        "https://pytorch-frontend.vercel.app/",
     ]
 
 CORS_ALLOW_CREDENTIALS = True

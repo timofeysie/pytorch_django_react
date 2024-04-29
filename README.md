@@ -1607,11 +1607,18 @@ os.environ['CLIENT_ORIGIN'] = 'http://3.26.241.7:8000/'
 
 Then go to [http://3.26.241.7:8000/](http://3.26.241.7:8000/) and I can see the root route response: ```{"message":"You have reached the PyTorch Django DRF API"}```.
 
-#### Start the systemd service
+### Why Nginx?
 
-To start the systemd service, follow these steps:
+When developing a Django app, we start off relying on the development server with the ```manage.py runserver``` command.
 
-1. Open Command Prompt as administrator.
+However, this is not recommended for production.  If you were to try to use this approach, you would see requests to the server from a browser blocked without even reaching the server.  The network tab would show the requests with a status such as:
+
+- (blocked:mixed-content)
+- (failed)net::ERR_SSL_PROTOCOL_ERROR
+
+You would notice just going to the http://3.26.241.7:8000/ directly you would see the app running.  However, the frontend API calls will be blocked.
+
+To resolve theses issues, we should ensure that all resources loaded by your application, including images, scripts, stylesheets, and favicons, are served over a secure HTTPS connection. To do this we will need a SSL certificate.
 
 #### Installing and Configuring Nginx
 
@@ -1702,3 +1709,11 @@ else:
         'https://pytorch-frontend-kunwflnck-timofeysies-projects.vercel.app'
     ]
 ```
+
+## Final thoughts
+
+Currently, the backend needs to use Nginx to address the SSL issues related to using the Django development server on the EC2 instance, which for project compatibility issues uses a Windows environment.
+
+However, Ngnix and Django don't quite play well with Windows.  Linux is their natural environment.
+
+Also, due to all the manual setup required by setting up an EC2 by scratch, I am looking at using Docker to use both locally and on a Linux EC2 instance.  Keep tuned to this project as I will be updating everything once I have the steps all figured out and the demo finally deployed and live.
