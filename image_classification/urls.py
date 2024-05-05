@@ -7,5 +7,4 @@ app_name = 'image_classification'
 urlpatterns = [
     # two paths: with or without given image
     path('', views.index, name='index'),
-    path('', include('images.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

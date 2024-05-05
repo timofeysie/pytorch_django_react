@@ -19,18 +19,20 @@ if os.path.exists('env.py'):
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-if 'DEV' not in os.environ:
-    REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'] = [
-        'rest_framework.renderers.JSONRenderer',
-    ]
-# Running on the remote EC2 instance
+if 'DEV' in os.environ:
+    REST_FRAMEWORK = {
+        'DEFAULT_RENDERER_CLASSES': [
+            'rest_framework.renderers.JSONRenderer',
+        ]
+    }
 else:
     REST_FRAMEWORK = {
         'DEFAULT_RENDERER_CLASSES': [
             # Add any additional renderer classes for production if needed
         ]
     }
-
+print('REST_FRAMEWORK[DEFAULT_RENDERER_CLASSES] ========')
+print(REST_FRAMEWORK['DEFAULT_RENDERER_CLASSES'])
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
@@ -41,7 +43,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 # DEBUG = 'DEV' in os.environ
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '172.31.29.15', '3.26.241.7']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '172.31.29.15', '3.26.241.7', '127.0.0.1:5173']
 
 # Application definition
 
@@ -81,9 +83,10 @@ else:
 
 CORS_ALLOW_CREDENTIALS = True
 
-print("------------")
+print("------------ start")
 print(os.environ.get('CLIENT_ORIGIN'))
 print(CORS_ALLOWED_ORIGINS)
+print("------------ end")
 
 ROOT_URLCONF = 'pytorch_django.urls'
 

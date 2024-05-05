@@ -1,8 +1,8 @@
 # PyTorch
 
-## Load a pre-trained model
+## Load a pretrained model
 
-Here is the brief of the 
+Here is the brief of the Python code to load a pretrained model and infer the title.
 
 image_classification\views.py
 
@@ -36,6 +36,15 @@ def get_prediction(image_bytes):
     predicted_idx = str(y_hat.item())
     class_name, human_label = imagenet_mapping[predicted_idx]
 ```
+
+### outputs = model.forward(tensor)
+
+According to [StackOverflow](https://stackoverflow.com/questions/58508190/in-pytorch-what-is-the-difference-between-forward-and-an-ordinary-method), the goal of the forward() method is to encapsulate the forward computational steps. forward() is called in the __call__ function. In the forward() method, PyTorch call the nested model itself to perform the forward pass.
+
+### _, y_hat = outputs.max(1)
+
+[torch.max(input, dim, keepdim=False, *, out=None)](https://pytorch.org/docs/stable/generated/torch.max.html)
+Returns a namedtuple (values, indices) where values is the maximum value of each row of the input tensor in the given dimension dim. And indices is the index location of each maximum value found (argmax).
 
 ### V1 or V2
 

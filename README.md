@@ -6,6 +6,10 @@ The current PyTorch functions are based on [Stefan Schneider's](https://stefanbs
 
 I have implemented a [Django REST Framework API](https://www.django-rest-framework.org/) to expose the use of the model to create a more real-world example of using a [React](https://react.dev/) frontend deploy ML projects.  This project is in a separate repo called [PyTorch Frontend](https://github.com/timofeysie/pytorch_frontend).
 
+The API is deployed [here](http://3.26.241.7:8000/images/).
+
+The frontend is deployed [here](https://pytorch-frontend.vercel.app/) although it is pending an SSL certificate to avoid CORS issues at the moment.
+
 This is just a basic demonstration deploying a pre-trained model for use on the web.  For me, a full stack ML engineer is a role that needs to have an awareness of Data Science and the AI landscape, but doesn't have to be an expert in all the fields.
 
 This project covers just some of the roles that I consider a fullstack ML engineer may be responsible for.  Things that could also be considered part of this role that I am not covering at the moment include:
