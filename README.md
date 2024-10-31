@@ -10,7 +10,7 @@ The API is deployed [here](http://3.26.241.7:8000/images/).
 
 The frontend is deployed [here](https://pytorch-frontend.vercel.app/) although it is pending an SSL certificate to avoid CORS issues at the moment.
 
-This is just a basic demonstration deploying a pre-trained model for use on the web.  For me, a full stack ML engineer is a role that needs to have an awareness of Data Science and the AI landscape, but doesn't have to be an expert in all the fields.
+This is just a basic demonstration deploying a pre-trained model for use on the web.  For me, a full stack ML engineer is a role that needs to have an awareness of Data Science and the AI landscape, but doesn't necessarily have to be an expert in all the related fields.
 
 This project covers just some of the roles that I consider a fullstack ML engineer may be responsible for.  Things that could also be considered part of this role that I am not covering at the moment include:
 
@@ -1471,7 +1471,7 @@ The profile for Microsoft Windows Server 2022 Base now means that we can't usee 
 
 The SSH approach for connecting to a Windows Server EC2 instance differs from connecting to a Linux instance. Windows Server instances on AWS typically use Remote Desktop Protocol (RDP) for remote access instead of SSH.
 
-##### First you will need the username and password
+##### The username and password
 
 Click on the "Actions" button and choose "Get Windows Password."
 
@@ -1499,7 +1499,7 @@ Once connected, you will have remote access to the Windows Server instance as if
 
 This is basically a computer desktop in the window.  You now open a command prompt and get to work.  The big differences in that is hella slow.  You have network calls back and forth, so there is a painful lag.  Patience here is a virtue.
 
-### Continue setup
+### Install our dependencies
 
 Rather than starting off with the command line, we will need to install our dependencies the old fashion way.
 
@@ -1624,7 +1624,7 @@ You would notice just going to the http://3.26.241.7:8000/ directly you would se
 
 To resolve theses issues, we should ensure that all resources loaded by your application, including images, scripts, stylesheets, and favicons, are served over a secure HTTPS connection. To do this we will need a SSL certificate.
 
-#### Installing and Configuring Nginx
+#### Instal and Configuring Nginx
 
 To install and configure Nginx on Windows, follow these steps:
 
@@ -1636,7 +1636,7 @@ To install and configure Nginx on Windows, follow these steps:
 
 4. Replace the contents of the `nginx.conf` file with the following configuration:
 
-\```plaintext
+```plaintext
 http {
     server {
         listen 80;
@@ -1653,7 +1653,7 @@ http {
         }
     }
 }
-\```
+```
 
 Replace `example.com` with your domain name or server IP address, and `C:\path\to\static\files` with the path to your static files directory.
 
@@ -1673,7 +1673,7 @@ To test and start Nginx, follow these steps:
 
 Once these steps are complete, Nginx should be serving your Django app. You can test the deployment by visiting your domain name or server IP address in a web browser.
 
-#### Running the Django App
+#### Run the Django App
 
 To run the Django app using Gunicorn on Windows, follow these steps:
 
@@ -1721,3 +1721,167 @@ Currently, the backend needs to use Nginx to address the SSL issues related to u
 However, Ngnix and Django don't quite play well with Windows.  Linux is their natural environment.
 
 Also, due to all the manual setup required by setting up an EC2 by scratch, I am looking at using Docker to use both locally and on a Linux EC2 instance.  Keep tuned to this project as I will be updating everything once I have the steps all figured out and the demo finally deployed and live.
+
+## The Project floodlight
+
+In this section I attempt to provide an oversight into the goals of the project and a high-level look at it as a floodlight might illuminate a nighttime scene where a flashlight only provides a look at individual sections one at a time.
+
+I created the [Django on Docker](https://github.com/testdrivenio/django-on-docker/blob/main/nginx/Dockerfile) project to pursue this goal.  So far, I have a good understanding of creating and using Docker locally to create a Django app with Postgres db.  I spent a lot of time setting up https and deploying this container to EC2.  It has been quite a rabbit hole.
+
+If you remember, Heroku didn't work out because deploying a pre-trained model goes way over the disk space limitations on Heroku.  Also, I want professional production grade experience with Django and ML models, hence the focus on EC2.
+
+However, since this time, the ML scene has been moving at a blistering pace.  There is so much corporate hype and bro-packed rooms of overeager meetup attendees. The AI supply is ahead of AI demand and it definitely feels like a bubble type situation where people mistake the hype for interest.
+
+The hype aside, all this interest is leading to a large number of package solutions, many of them low code and aimed and avoiding all the work I have detailed in these projects to just get on with using ML models.  The emphasis is of course on ChatGPT clones with the standard chat UI frontend almost like a plugin.
+
+My goal is to use my developer skills to explore deploying AI solutions and the UX of working with models.  Still, experiences like working with [DataStax](https://www.datastax.com/products/datastax-astra) and their Astra Vector DB via a LangChain UI reminded me of my work with [MS Azure's ML cloud](https://azure.microsoft.com/en-in/products/machine-learning/) low-code offering a few years ago.  In these scenarios, you create a cloud service as a UML type box with inputs and outputs and connect them in the UI and use the service right there.  I suppose this could be put into production, but then the whole frontend question of auth and other site requirements come in.
+
+The DatStax approach is powerful.  Within an hour I had a RAG ML model setup where I could upload PDF data and query that using foundation ML models hosted on AWS Bedrock.  This ability in itself is awesome, but I could just as well use someone elses deployed RAG service for free.  Probably there is a quick way to deploy our DenseNext or ImageNet dataset model and use that and save all this work.
+
+However, this is about real-world experience, and how much of that would I get in a low-code environment?  But the way ML models are used in the wild and the way companies with implement their ML projects does have a direct impact on the goals of developing full stack skills on this scale.
+
+It must be said that the Django meetup in Sydney had less than ten people attending when I went.  Still, a [google trends comparrison](https://trends.google.com.au/trends/explore?date=today%205-y&q=%2Fm%2F06y_qx,%2Fg%2F11lgrtwxst,flask,%2Fm%2F0bbxf89&hl=en-AU) shows Django and Flask neck in neck with each other and FastAPI steadily catching up.  Adding in Node.js, my old favorite, and it beats them all.  I'm not considering .NET or other backend technologies.  This is about augmenting my current full-stack skill set.  But it also should include a view of what kind of role I could get at a company as a full-stack developer.
+
+On the job front, I see many more roles these days that specifically mention Node.js on the backend.  I wish it was like that a few years ago when I built everything I made with a Nest.js (that's Node.js with TypeScript and an Angular class-based approach).  Now those skills are slowly fading away just when I could make use of them.
+
+The whole reason I thought a Python backend was a good idea is that it uses the ML libraries which are the life-blood of ML directly.  The Javascript version of these are old and not well maintained.  My approach in the [Satisfactory](https://github.com/timofeysie/satisfactory) project was to eventually call these Python libraries by spawning a new process.  However, this kept me out of using the libs directly, and indeed I had to get help from an ML expert to make the models I wanted to use actually work.
+
+The problem with the above setup, is that it only ran on my laptop.  Deploying that mess of a monolithic app would have been a messy nightmare.
+
+So I still don't know what is the best approach, but its worth writing this out to keep an eye on what matters most about this project, and how it solves the deployed ML problem, and where this solution sits in the fast moving ecosystem which is known as generative AI.
+
+## Zappa
+
+After my experience with Docker and the costs involved in maintaining EC2 instances, the serverless architectural style was looking pretty good.  I have only used a serverless approach with TypeScript, but I knew it supported other architectures.
+
+I thought maybe using an AWS lambda function would work to deploy the model, so I followed the instructions in the article [Deploying Django on AWS Lambda with Zappa: A Serverless Computing Approach](https://www.mindbowser.com/django-aws-lambda-guide/)
+
+I wasn't sure about the venv steps and installing zappa and doing zappa commands.  I thought venv should only be used for pip install commands, but then the terminal did not recognize the zappa commands, so I had to do that all inside the venv shell.
+
+But in the end, the result was similar to the Heroku deployment:
+
+```sh
+Updating Lambda function code..
+Oh no! An error occurred! :(
+==============
+Traceback (most recent call last):
+  File "C:\Users\timof\repos\django\pytorch_django_react\venv\lib\site-packages\zappa\cli.py", line 3048, in handle
+    sys.exit(cli.handle())
+  ...
+  File "C:\Users\timof\repos\django\pytorch_django_react\venv\lib\site-packages\botocore\client.py", line 1023, in _make_api_call
+    raise error_class(parsed_response, operation_name)
+botocore.errorfactory.InvalidParameterValueException: An error occurred (InvalidParameterValueException) when calling the UpdateFunctionCode operation: Unzipped size must be smaller than 262144000 bytes
+==============
+```
+
+AWS Lambda has a maximum unzipped deployment package size of 250 MB.
+
+Since this application uses PyTorch, which is quite large, it's not going to work.
+
+Or is it?  ChatGPT said I might need to use Lambda layers or other strategies to manage the size.
+
+## Strategies to Manage Deployment Package Size
+
+### Use Lambda Layers
+
+Lambda layers allow you to separate your dependencies from your main deployment package. You can create a layer for PyTorch and other large dependencies.
+
+Here’s how you can create and use a Lambda layer:
+
+Create a Layer:
+
+mkdir python
+
+pip install torch -t python/
+
+zip -r9 pytorch_layer.zip python
+
+aws lambda publish-layer-version --layer-name pytorch --zip-file fileb://pytorch_layer.zip --compatible-runtimes python3.10
+
+Update zappa_settings.json to include the layer:
+JSON
+
+{
+    "dev": {
+        "app_function": "pytorch_django.wsgi.application",
+        "aws_region": "ap-northeast-2",
+        "exclude": [
+            "boto3",
+            "botocore"
+        ],
+        "profile_name": "default",
+        "project_name": "pytorch-django",
+        "runtime": "python3.10",
+        "s3_bucket": "zappa-django-for-pytorch",
+        "layers": [
+            "arn:aws:lambda:ap-northeast-2:<ACCOUNT_ID>:layer:pytorch:<VERSION>"
+        ]
+    }
+}
+AI-generated code. Review and use carefully. More info on FAQ.
+Replace <ACCOUNT_ID> with your AWS account ID and <VERSION> with the version number of the layer you created.
+Optimize Dependencies:
+Ensure that your requirements.txt only includes necessary dependencies. Remove any unused or unnecessary packages.
+Use S3 for Large Files:
+Store large files in S3 and download them at runtime if needed. This can help reduce the size of your deployment package.
+
+```sh
+(venv) PS C:\Users\timof\repos\django\pytorch_django_react> pip install torch -t python/
+...
+Installing collected packages: mpmath, typing-extensions, sympy, networkx, MarkupSafe, fsspec, filelock, jinja2, torch
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+torchvision 0.17.1 requires torch==2.2.1, but you have torch 2.4.1 which is incompatible.
+Successfully installed MarkupSafe-2.1.5 filelock-3.16.1 fsspec-2024.9.0 jinja2-3.1.4 mpmath-1.3.0 networkx-3.3 sympy-1.13.3 torch-2.4.1 typing-extensions-4.12.2
+
+[notice] A new release of pip is available: 23.0.1 -> 24.2
+[notice] To update, run: python.exe -m pip install --upgrade pip
+```
+
+The result is still not usable:
+
+```sh
+-a----        27/09/2024   6:43 PM      253592086 pytorch_layer.zip
+```
+
+But for some reason it didn't go into the python directory:
+
+```sh
+Directory: C:\Users\timof\repos\django\pytorch_django_react\python
+
+
+Mode                 LastWriteTime         Length Name
+----                 -------------         ------ ----
+d-----        27/09/2024   6:23 PM                bin
+d-----        27/09/2024   6:23 PM                filelock
+d-----        27/09/2024   6:23 PM                filelock-3.16.1.dist-info
+d-----        27/09/2024   6:23 PM                fsspec
+d-----        27/09/2024   6:23 PM                fsspec-2024.9.0.dist-info
+d-----        27/09/2024   6:23 PM                functorch
+d-----        27/09/2024   6:23 PM                jinja2
+d-----        27/09/2024   6:23 PM                jinja2-3.1.4.dist-info
+d-----        27/09/2024   6:23 PM                markupsafe
+d-----        27/09/2024   6:23 PM                MarkupSafe-2.1.5.dist-info
+d-----        27/09/2024   6:22 PM                mpmath
+d-----        27/09/2024   6:23 PM                mpmath-1.3.0.dist-info
+d-----        27/09/2024   6:23 PM                networkx
+d-----        27/09/2024   6:23 PM                networkx-3.3.dist-info
+d-----        27/09/2024   6:28 PM                numpy
+d-----        27/09/2024   6:28 PM                numpy-2.1.1.dist-info
+d-----        27/09/2024   6:28 PM                numpy.libs
+d-----        27/09/2024   6:28 PM                PIL
+d-----        27/09/2024   6:28 PM                pillow-10.4.0.dist-info
+d-----        27/09/2024   6:23 PM                share
+d-----        27/09/2024   6:23 PM                sympy
+d-----        27/09/2024   6:23 PM                sympy-1.13.3.dist-info
+d-----        27/09/2024   6:23 PM                torch
+d-----        27/09/2024   6:28 PM                torch-2.2.1.dist-info
+d-----        27/09/2024   6:23 PM                torch-2.4.1.dist-info
+d-----        27/09/2024   6:23 PM                torchgen
+d-----        27/09/2024   6:28 PM                torchvision
+d-----        27/09/2024   6:28 PM                torchvision-0.17.1.dist-info
+d-----        27/09/2024   6:23 PM                typing_extensions-4.12.2.dist-info
+d-----        27/09/2024   6:23 PM                __pycache__
+-a----        27/09/2024   6:23 PM          11207 isympy.py
+-a----        27/09/2024   6:28 PM              0 numpy-2.1.1-cp310-cp310-win_amd64.whl
+-a----        27/09/2024   6:23 PM         134451 typing_extensions.py
+```

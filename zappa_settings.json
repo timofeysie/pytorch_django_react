@@ -1,0 +1,14 @@
+{
+    "dev": {
+        "app_function": "pytorch_django.wsgi.application",
+        "aws_region": "ap-northeast-2",
+        "exclude": [
+            "boto3",
+            "botocore"
+        ],
+        "profile_name": "default",
+        "project_name": "pytorch-django",
+        "runtime": "python3.10",
+        "s3_bucket": "zappa-django-for-pytorch"
+    }
+}

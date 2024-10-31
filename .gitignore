@@ -8,3 +8,7 @@ node_modules/
 .github/
 cloudinary_python.txt
 db.sqlite3
+python/
+venv/
+pytorch-django-dev-1727176456.zip
+pytorch_layer.zip
